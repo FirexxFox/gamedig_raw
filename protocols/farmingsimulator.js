@@ -44,11 +44,8 @@ export default class farmingsimulator extends Core {
         z: parseFloat(player['@_z'])
       })
     }
-
-    state.raw = {
-      data: request,
-      mods: []
-    }
+   state.rawdata = request
+   state.raw.mods = []
 
     const mods = serverInfo?.Mods?.Mod || [];
 
