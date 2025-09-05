@@ -29,21 +29,44 @@ export default class farmingsimulator extends Core {
     state.numplayers = parseInt(playerInfo['@_numUsed'], 10) || 0
     state.maxplayers = parseInt(playerInfo['@_capacity'], 10) || 0
 
-    const players = playerInfo.Player
+const players = playerInfo.Player || []
+const vehicles = serverInfo?.Vehicles?.Vehicle || []
 
-    for (const player of players) {
-      if (player['@_isUsed'] !== 'true') { continue }
+for (const player of players) {
+  if (player['@_isUsed'] !== 'true') continue
 
-      state.players.push({
-        name: player['#text'],
-        isUsed: player['@_isUsed'] === 'true',
-        isAdmin: player['@_isAdmin'] === 'true',
-        uptime: parseInt(player['@_uptime'], 10),
-        x: parseFloat(player['@_x']),
-        y: parseFloat(player['@_y']),
-        z: parseFloat(player['@_z'])
-      })
+  let x = parseFloat(player['@_x'])
+  let y = parseFloat(player['@_y'])
+  let z = parseFloat(player['@_z'])
+  let in_machine = false
+  let machine_name = null
+
+  if (isNaN(x) || isNaN(y) || isNaN(z)) {
+    in_machine = true
+    const vehicle = vehicles.find(v => v['@_controller'] === player['#text'])
+    if (vehicle) {
+      x = parseFloat(vehicle['@_x']) || null
+      y = parseFloat(vehicle['@_y']) || null
+      z = parseFloat(vehicle['@_z']) || null
+      machine_name = vehicle['@_name'] || null
+    } else {
+      x = y = z = null
     }
+  }
+
+  state.players.push({
+    name: player['#text'],
+    isUsed: true,
+    isAdmin: player['@_isAdmin'] === 'true',
+    uptime: parseInt(player['@_uptime'], 10),
+    in_machine,
+    machine_name,
+    x,
+    y,
+    z
+  })
+}
+
    state.rawdata = request
    state.raw.mods = []
 
