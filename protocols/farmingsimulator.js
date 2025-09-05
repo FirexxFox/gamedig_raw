@@ -22,68 +22,71 @@ export default class farmingsimulator extends Core {
     const serverInfo = parsed.Server
     const playerInfo = serverInfo.Slots
 
-    // Attributes in fast-xml-parser are prefixed with @_
-
+    // Podstawowe informacje o serwerze
     state.name = serverInfo['@_name']
     state.map = serverInfo['@_mapName']
     state.numplayers = parseInt(playerInfo['@_numUsed'], 10) || 0
     state.maxplayers = parseInt(playerInfo['@_capacity'], 10) || 0
 
-const players = playerInfo.Player || []
-const vehicles = serverInfo?.Vehicles?.Vehicle || []
-
-for (const player of players) {
-  if (player['@_isUsed'] !== 'true') continue
-
-  let x = parseFloat(player['@_x'])
-  let y = parseFloat(player['@_y'])
-  let z = parseFloat(player['@_z'])
-  let in_machine = false
-  let machine_name = null
-
-  if (isNaN(x) || isNaN(y) || isNaN(z)) {
-    in_machine = true
-    const vehicle = vehicles.find(v => v['@_controller'] === player['#text'])
-    if (vehicle) {
-      x = parseFloat(vehicle['@_x']) || null
-      y = parseFloat(vehicle['@_y']) || null
-      z = parseFloat(vehicle['@_z']) || null
-      machine_name = vehicle['@_name'] || null
-    } else {
-      x = y = z = null
+    // Funkcja do dekodowania encji w atrybutach i nickach
+    function decodeEntities(str) {
+      if (!str) return str
+      return str
+        .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+        .replace(/&#94;/g, '^')
     }
-  }
 
-  state.players.push({
-    name: player['#text'],
-    isUsed: true,
-    isAdmin: player['@_isAdmin'] === 'true',
-    uptime: parseInt(player['@_uptime'], 10),
-    in_machine,
-    machine_name,
-    x,
-    y,
-    z
-  })
-}
+    const players = playerInfo.Player || []
+    const vehicles = serverInfo?.Vehicles?.Vehicle || []
 
-   state.rawdata = request
-   state.raw.mods = []
+    // Dekodujemy wszystkie atrybuty pojazdów
+    vehicles.forEach(v => {
+      v['@_controller'] = decodeEntities(v['@_controller'])
+      v['@_name'] = decodeEntities(v['@_name'])
+    })
 
-    const mods = serverInfo?.Mods?.Mod || [];
+    for (const player of players) {
+      if (player['@_isUsed'] !== 'true') continue
 
-    for (const mod of mods) {
-      if (mod['@_name'] == null) { continue }
+      // Dekodujemy nick gracza
+      const playerName = decodeEntities(player['#text'])
 
-      state.raw.mods.push({
-        name: mod['#text'],
-        short_name: mod['@_name'],
-        author: mod['@_author'],
-        version: mod['@_version'],
-        hash: mod['@_hash']
+      let x = parseFloat(player['@_x'])
+      let y = parseFloat(player['@_y'])
+      let z = parseFloat(player['@_z'])
+      let in_machine = false
+      let machine_name = null
+
+      if (isNaN(x) || isNaN(y) || isNaN(z)) {
+        // Gracz nie ma pozycji → sprawdzamy pojazdy
+        in_machine = true
+        const vehicle = vehicles.find(v => v['@_controller'] === playerName)
+        if (vehicle) {
+          x = parseFloat(vehicle['@_x']) || null
+          y = parseFloat(vehicle['@_y']) || null
+          z = parseFloat(vehicle['@_z']) || null
+          machine_name = vehicle['@_name'] || null
+        } else {
+          x = y = z = null
+        }
+      }
+
+      state.players.push({
+        name: playerName,
+        isAdmin: player['@_isAdmin'] === 'true',
+        in_machine,
+        machine_name,
+        x,
+        y,
+        z
       })
     }
 
-    state.version = serverInfo['@_version']
+    state.rawdata = request
   }
 }
