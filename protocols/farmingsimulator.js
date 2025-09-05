@@ -50,30 +50,30 @@ export default class farmingsimulator extends Core {
       v['@_name'] = decodeEntities(v['@_name'])
     })
 
+
     for (const player of players) {
       if (player['@_isUsed'] !== 'true') continue
 
-      // Dekodujemy nick gracza
       const playerName = decodeEntities(player['#text'])
-
-      let x = parseFloat(player['@_x'])
-      let y = parseFloat(player['@_y'])
-      let z = parseFloat(player['@_z'])
+      let x = null
+      let y = null
+      let z = null
       let in_machine = false
       let machine_name = null
 
-      if (isNaN(x) || isNaN(y) || isNaN(z)) {
-        // Gracz nie ma pozycji → sprawdzamy pojazdy
+      // Najpierw sprawdzamy pojazd
+      const vehicle = vehicles.find(v => v['@_controller'] === playerName)
+      if (vehicle) {
         in_machine = true
-        const vehicle = vehicles.find(v => v['@_controller'] === playerName)
-        if (vehicle) {
-          x = parseFloat(vehicle['@_x']) || null
-          y = parseFloat(vehicle['@_y']) || null
-          z = parseFloat(vehicle['@_z']) || null
-          machine_name = vehicle['@_name'] || null
-        } else {
-          x = y = z = null
-        }
+        x = parseFloat(vehicle['@_x']) || null
+        y = parseFloat(vehicle['@_y']) || null
+        z = parseFloat(vehicle['@_z']) || null
+        machine_name = vehicle['@_name'] || null
+      } else {
+        // Jeśli nie ma pojazdu, sprawdzamy pozycję gracza
+        x = parseFloat(player['@_x']) || null
+        y = parseFloat(player['@_y']) || null
+        z = parseFloat(player['@_z']) || null
       }
 
       state.players.push({
