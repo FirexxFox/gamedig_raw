@@ -87,6 +87,5 @@ export default class farmingsimulator extends Core {
       })
     }
 
-    state.rawdata = request
   }
 }
