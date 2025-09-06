@@ -52,19 +52,18 @@ export default class farmingsimulator extends Core {
         if (player['@_isUsed'] !== 'true') continue
 
         const playerName = decodeEntities(player['#text'])
-        let x = null, y = null, z = null
-        let in_machine = false, machine_name = null
+        let x = null, z = null
+        let in_machine = "brak"
+        let machine_name = "brak"
 
         const vehicle = vehicles.find(v => v['@_controller'] === playerName)
         if (vehicle) {
-          in_machine = true
+          in_machine = "true"
+          machine_name = vehicle['@_name'] || "brak"
           x = parseFloat(vehicle['@_x']) || null
-          y = parseFloat(vehicle['@_y']) || null
           z = parseFloat(vehicle['@_z']) || null
-          machine_name = vehicle['@_name'] || null
         } else {
           x = parseFloat(player['@_x']) || null
-          y = parseFloat(player['@_y']) || null
           z = parseFloat(player['@_z']) || null
         }
 
@@ -75,7 +74,6 @@ export default class farmingsimulator extends Core {
           in_machine,
           machine_name,
           x,
-          y,
           z
         })
 
