@@ -5,6 +5,7 @@ export default class farmingsimulator extends Core {
   async run (state) {
     // Zakładamy na początku, że serwer nie działa
     state.online = false
+    state.players = {}
 
     try {
       if (!this.options.port) this.options.port = 8080
@@ -15,8 +16,7 @@ export default class farmingsimulator extends Core {
         responseType: 'text'
       })
 
-      const isValidXML = XMLValidator.validate(request)
-      if (!isValidXML) throw new Error('Invalid XML received from Farming Simulator Server')
+      if (!XMLValidator.validate(request)) throw new Error('Invalid XML received from Farming Simulator Server')
 
       const parser = new XMLParser({ ignoreAttributes: false })
       const parsed = parser.parse(request)
@@ -30,18 +30,17 @@ export default class farmingsimulator extends Core {
       state.numplayers = parseInt(playerInfo['@_numUsed'], 10) || 0
       state.maxplayers = parseInt(playerInfo['@_capacity'], 10) || 0
 
-      // Funkcja do dekodowania encji w atrybutach i nickach
-      function decodeEntities(str) {
-        if (!str) return str
-        return str
-          .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&amp;/g, '&')
-          .replace(/&quot;/g, '"')
-          .replace(/&apos;/g, "'")
-          .replace(/&#94;/g, '^')
-      }
+      // Funkcja do dekodowania encji
+      const decodeEntities = str => str
+        ? str
+            .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .replace(/&quot;/g, '"')
+            .replace(/&apos;/g, "'")
+            .replace(/&#94;/g, '^')
+        : str
 
       const players = playerInfo.Player || []
       const vehicles = serverInfo?.Vehicles?.Vehicle || []
@@ -52,19 +51,14 @@ export default class farmingsimulator extends Core {
         v['@_name'] = decodeEntities(v['@_name'])
       })
 
-      const playerList = {}
-
+      let counter = 1
       for (const player of players) {
         if (player['@_isUsed'] !== 'true') continue
 
         const playerName = decodeEntities(player['#text'])
-        let x = null
-        let y = null
-        let z = null
-        let in_machine = false
-        let machine_name = null
+        let x = null, y = null, z = null
+        let in_machine = false, machine_name = null
 
-        // Najpierw sprawdzamy pojazd
         const vehicle = vehicles.find(v => v['@_controller'] === playerName)
         if (vehicle) {
           in_machine = true
@@ -73,13 +67,13 @@ export default class farmingsimulator extends Core {
           z = parseFloat(vehicle['@_z']) || null
           machine_name = vehicle['@_name'] || null
         } else {
-          // Jeśli nie ma pojazdu, sprawdzamy pozycję gracza
           x = parseFloat(player['@_x']) || null
           y = parseFloat(player['@_y']) || null
           z = parseFloat(player['@_z']) || null
         }
 
-        state.players.push({
+        // Zapisujemy gracza w obiekcie po unikalnym kluczu
+        state.players[`player${counter}`] = {
           name: playerName,
           isAdmin: player['@_isAdmin'] === 'true',
           in_machine,
@@ -87,10 +81,12 @@ export default class farmingsimulator extends Core {
           x,
           y,
           z
-        })
+        }
+
+        counter++
       }
 
-      // Serwer działa, więc online = true
+      // Serwer działa
       state.online = true
 
     } catch (err) {
