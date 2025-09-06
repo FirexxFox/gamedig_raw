@@ -52,7 +52,7 @@ export default class farmingsimulator extends Core {
         v['@_name'] = decodeEntities(v['@_name'])
       })
 
-      const playerList = []
+      const playerList = {}
 
       for (const player of players) {
         if (player['@_isUsed'] !== 'true') continue
@@ -79,7 +79,7 @@ export default class farmingsimulator extends Core {
           z = parseFloat(player['@_z']) || null
         }
 
-        playerList.push({
+        player.push({
           name: playerName,
           isAdmin: player['@_isAdmin'] === 'true',
           in_machine,
@@ -89,14 +89,6 @@ export default class farmingsimulator extends Core {
           z
         })
       }
-
-      // Zmieniamy tablicę na jeden obiekt
-      const playersObject = {}
-      playerList.forEach((p, index) => {
-        playersObject[`player${index + 1}`] = p
-      })
-
-      state.players = playersObject
 
       // Serwer działa, więc online = true
       state.online = true
