@@ -5,7 +5,6 @@ export default class farmingsimulator extends Core {
   async run (state) {
     // Zakładamy na początku, że serwer nie działa
     state.online = false
-    state.playersJSON = '[]'
 
     try {
       if (!this.options.port) this.options.port = 8080
@@ -91,8 +90,13 @@ export default class farmingsimulator extends Core {
         })
       }
 
-      // Ustawiamy JSON w formie tekstu
-      state.playersJSON = JSON.stringify(playerList)
+      // Zmieniamy tablicę na jeden obiekt
+      const playersObject = {}
+      playerList.forEach((p, index) => {
+        playersObject[`player${index + 1}`] = p
+      })
+
+      state.players = playersObject
 
       // Serwer działa, więc online = true
       state.online = true
@@ -100,7 +104,7 @@ export default class farmingsimulator extends Core {
     } catch (err) {
       console.error('Błąd pobierania danych z serwera:', err)
       state.online = false
-      state.playersJSON = '[]'
+      state.players = {}
     }
   }
 }
