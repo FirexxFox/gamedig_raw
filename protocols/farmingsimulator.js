@@ -53,12 +53,10 @@ export default class farmingsimulator extends Core {
 
         const playerName = decodeEntities(player['#text'])
         let x = null, z = null
-        let in_machine = "brak"
         let machine_name = "brak"
 
         const vehicle = vehicles.find(v => v['@_controller'] === playerName)
         if (vehicle) {
-          in_machine = "true"
           machine_name = vehicle['@_name'] || "brak"
           x = parseFloat(vehicle['@_x']) || null
           z = parseFloat(vehicle['@_z']) || null
@@ -71,7 +69,6 @@ export default class farmingsimulator extends Core {
           id: idCounter,
           name: playerName,
           isAdmin: player['@_isAdmin'] === 'true',
-          in_machine,
           machine_name,
           x,
           z
