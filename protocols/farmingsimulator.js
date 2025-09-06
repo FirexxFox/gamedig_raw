@@ -79,7 +79,7 @@ export default class farmingsimulator extends Core {
           z = parseFloat(player['@_z']) || null
         }
 
-        players.push({
+        state.players.push({
           name: playerName,
           isAdmin: player['@_isAdmin'] === 'true',
           in_machine,
