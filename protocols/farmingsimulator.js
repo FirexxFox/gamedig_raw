@@ -3,9 +3,8 @@ import { XMLParser, XMLValidator } from 'fast-xml-parser'
 
 export default class farmingsimulator extends Core {
   async run (state) {
-    // Zakładamy na początku, że serwer nie działa
     state.online = false
-    state.players = {}
+    state.players = []
 
     try {
       if (!this.options.port) this.options.port = 8080
@@ -24,13 +23,11 @@ export default class farmingsimulator extends Core {
       const serverInfo = parsed.Server
       const playerInfo = serverInfo.Slots
 
-      // Podstawowe informacje o serwerze
       state.name = serverInfo['@_name']
       state.map = serverInfo['@_mapName']
       state.numplayers = parseInt(playerInfo['@_numUsed'], 10) || 0
       state.maxplayers = parseInt(playerInfo['@_capacity'], 10) || 0
 
-      // Funkcja do dekodowania encji
       const decodeEntities = str => str
         ? str
             .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
@@ -45,13 +42,12 @@ export default class farmingsimulator extends Core {
       const players = playerInfo.Player || []
       const vehicles = serverInfo?.Vehicles?.Vehicle || []
 
-      // Dekodujemy wszystkie atrybuty pojazdów
       vehicles.forEach(v => {
         v['@_controller'] = decodeEntities(v['@_controller'])
         v['@_name'] = decodeEntities(v['@_name'])
       })
 
-      let counter = 1
+      let idCounter = 1
       for (const player of players) {
         if (player['@_isUsed'] !== 'true') continue
 
@@ -72,8 +68,8 @@ export default class farmingsimulator extends Core {
           z = parseFloat(player['@_z']) || null
         }
 
-        // Zapisujemy gracza w obiekcie po unikalnym kluczu
-        state.players[`player${counter}`] = {
+        state.players.push({
+          id: idCounter,
           name: playerName,
           isAdmin: player['@_isAdmin'] === 'true',
           in_machine,
@@ -81,18 +77,17 @@ export default class farmingsimulator extends Core {
           x,
           y,
           z
-        }
+        })
 
-        counter++
+        idCounter++
       }
 
-      // Serwer działa
       state.online = true
 
     } catch (err) {
       console.error('Błąd pobierania danych z serwera:', err)
       state.online = false
-      state.players = {}
+      state.players = []
     }
   }
 }
