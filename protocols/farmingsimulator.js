@@ -47,7 +47,7 @@ export default class farmingsimulator extends Core {
         v['@_name'] = decodeEntities(v['@_name'])
       })
 
-      let idCounter = 1
+      let idCounter = 0
       for (const player of players) {
         if (player['@_isUsed'] !== 'true') continue
 
